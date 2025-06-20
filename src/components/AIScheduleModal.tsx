@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { DateRange } from 'react-day-picker';
 
 interface AIScheduleModalProps {
   isOpen: boolean;
@@ -125,11 +126,11 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
   };
 
   const renderSetupStep = () => (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Candidate Context */}
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="text-lg font-medium mb-3">Interview Details</h3>
-        <div className="space-y-2 text-sm">
+      <div className="bg-gray-50 rounded-lg p-3">
+        <h3 className="text-lg font-medium mb-2">Interview Details</h3>
+        <div className="space-y-1 text-sm">
           <div><span className="font-medium">Candidate:</span> {candidateData.name}</div>
           <div><span className="font-medium">Position:</span> {candidateData.jobTitle}</div>
           <div><span className="font-medium">Consent Status:</span> 
@@ -143,8 +144,9 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
             <span className="font-medium">Current Status:</span> 
             <span className="ml-2">{candidateData.interviewStatus === 'to-be-scheduled' ? 'To be scheduled' : 'Reschedule request'}</span>
             {candidateData.interviewStatus === 'reschedule-request' && (
-              <MessageCircle size={16} className="ml-2 text-blue-600 cursor-pointer" 
-                title={`Reason: ${candidateData.rescheduleReason}\nSuggested: ${candidateData.suggestedTime}`} />
+              <div className="ml-2 cursor-pointer" title={`Reason: ${candidateData.rescheduleReason}\nSuggested: ${candidateData.suggestedTime}`}>
+                <MessageCircle size={16} className="text-blue-600" />
+              </div>
             )}
           </div>
         </div>
@@ -152,8 +154,8 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
 
       {/* Interview Type Selection */}
       <div>
-        <h3 className="text-lg font-medium mb-3">Interview Type</h3>
-        <div className="grid grid-cols-3 gap-3">
+        <h3 className="text-lg font-medium mb-2">Interview Type</h3>
+        <div className="grid grid-cols-3 gap-2">
           {[
             { type: '1:1' as InterviewType, label: '1:1 Interview' },
             { type: 'panel' as InterviewType, label: 'Panel Interview' },
@@ -162,7 +164,7 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
             <button
               key={type}
               onClick={() => setInterviewType(type)}
-              className={`p-3 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+              className={`p-2 border-2 rounded-lg flex flex-col items-center space-y-1 transition-colors ${
                 interviewType === type 
                   ? 'border-blue-600 bg-blue-50' 
                   : 'border-gray-200 hover:border-gray-300'
@@ -193,21 +195,25 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
 
       {/* Date Selection */}
       <div>
-        <h3 className="text-lg font-medium mb-3">Select Interview Date Range</h3>
+        <h3 className="text-lg font-medium mb-2">Select Interview Date Range</h3>
         {showCalendar ? (
           <Calendar
             mode="range"
             selected={dateRange}
-            onSelect={(range) => {
-              setDateRange(range || { from: undefined, to: undefined });
-              if (range?.from && range?.to) {
-                setShowCalendar(false);
+            onSelect={(range: DateRange | undefined) => {
+              if (range) {
+                setDateRange(range);
+                if (range.from && range.to) {
+                  setShowCalendar(false);
+                }
+              } else {
+                setDateRange({ from: undefined, to: undefined });
               }
             }}
             className="rounded-md border"
           />
         ) : (
-          <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+          <div className="flex items-center justify-between p-2 border rounded-lg bg-gray-50">
             <span className="text-sm">{formatDateRange()}</span>
             <button onClick={() => setShowCalendar(true)}>
               <Pencil size={16} className="text-blue-600" />
@@ -218,29 +224,31 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
 
       {/* Participant Selection */}
       <div>
-        <h3 className="text-lg font-medium mb-3">
+        <h3 className="text-lg font-medium mb-2">
           {interviewType === '1:1' ? 'Select Interviewer' : 'Select Participants'}
         </h3>
         
         {/* Selected Participants */}
         {selectedParticipants.length > 0 && (
-          <div className="mb-4">
+          <div className="mb-3">
             {(interviewType === 'panel' || interviewType === 'interviewer-observers') && (
               <>
-                <h4 className="text-sm font-medium mb-2">Interviewers</h4>
-                <div className="flex flex-wrap gap-2 mb-3">
+                <h4 className="text-sm font-medium mb-1">Interviewers</h4>
+                <div className="flex flex-wrap gap-1 mb-2">
                   {selectedParticipants
                     .filter(p => p.role === 'interviewer')
                     .map(participant => (
-                      <div key={participant.id} className="flex items-center space-x-2 bg-gray-100 rounded-full px-3 py-1">
-                        <Avatar className="w-5 h-5">
+                      <div key={participant.id} className="flex items-center space-x-1 bg-gray-100 rounded-full px-2 py-1">
+                        <Avatar className="w-4 h-4">
                           <AvatarFallback className="text-xs">
                             {participant.name.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-xs">{participant.name}</span>
                         {!participant.hasCalendarAccess && (
-                          <CalendarIcon size={12} className="text-orange-500" title="Request calendar access" />
+                          <div className="cursor-pointer" title="Request calendar access">
+                            <CalendarIcon size={12} className="text-orange-500" />
+                          </div>
                         )}
                         <button
                           onClick={() => removeParticipant(participant.id)}
@@ -254,20 +262,22 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
                 
                 {interviewType === 'interviewer-observers' && (
                   <>
-                    <h4 className="text-sm font-medium mb-2">Observers</h4>
-                    <div className="flex flex-wrap gap-2 mb-3">
+                    <h4 className="text-sm font-medium mb-1">Observers</h4>
+                    <div className="flex flex-wrap gap-1 mb-2">
                       {selectedParticipants
                         .filter(p => p.role === 'observer')
                         .map(participant => (
-                          <div key={participant.id} className="flex items-center space-x-2 bg-gray-100 rounded-full px-3 py-1">
-                            <Avatar className="w-5 h-5">
+                          <div key={participant.id} className="flex items-center space-x-1 bg-gray-100 rounded-full px-2 py-1">
+                            <Avatar className="w-4 h-4">
                               <AvatarFallback className="text-xs">
                                 {participant.name.split(' ').map(n => n[0]).join('')}
                               </AvatarFallback>
                             </Avatar>
                             <span className="text-xs">{participant.name}</span>
                             {!participant.hasCalendarAccess && (
-                              <CalendarIcon size={12} className="text-orange-500" title="Request calendar access" />
+                              <div className="cursor-pointer" title="Request calendar access">
+                                <CalendarIcon size={12} className="text-orange-500" />
+                              </div>
                             )}
                             <button
                               onClick={() => removeParticipant(participant.id)}
@@ -284,17 +294,19 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
             )}
             
             {interviewType === '1:1' && (
-              <div className="flex flex-wrap gap-2 mb-3">
+              <div className="flex flex-wrap gap-1 mb-2">
                 {selectedParticipants.map(participant => (
-                  <div key={participant.id} className="flex items-center space-x-2 bg-gray-100 rounded-full px-3 py-1">
-                    <Avatar className="w-5 h-5">
+                  <div key={participant.id} className="flex items-center space-x-1 bg-gray-100 rounded-full px-2 py-1">
+                    <Avatar className="w-4 h-4">
                       <AvatarFallback className="text-xs">
                         {participant.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-xs">{participant.name}</span>
                     {!participant.hasCalendarAccess && (
-                      <CalendarIcon size={12} className="text-orange-500" title="Request calendar access" />
+                      <div className="cursor-pointer" title="Request calendar access">
+                        <CalendarIcon size={12} className="text-orange-500" />
+                      </div>
                     )}
                     <button
                       onClick={() => removeParticipant(participant.id)}
@@ -324,7 +336,7 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
               .map(member => (
                 <DropdownMenuItem 
                   key={member.id} 
-                  className="cursor-pointer p-3"
+                  className="cursor-pointer p-2"
                   onClick={() => {
                     if (interviewType === 'interviewer-observers') {
                       const interviewerCount = selectedParticipants.filter(p => p.role === 'interviewer').length;
@@ -335,8 +347,8 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
                     }
                   }}
                 >
-                  <div className="flex items-center space-x-3 w-full">
-                    <Avatar className="w-6 h-6">
+                  <div className="flex items-center space-x-2 w-full">
+                    <Avatar className="w-5 h-5">
                       <AvatarFallback className="text-xs">
                         {member.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
@@ -363,7 +375,7 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
 
         {/* Availability Status */}
         {selectedParticipants.length > 0 && (
-          <div className="mt-3 flex items-center space-x-2">
+          <div className="mt-2 flex items-center space-x-2">
             {(() => {
               const status = getAvailabilityStatus();
               const IconComponent = status.status === 'green' ? CheckCircle : 
@@ -385,7 +397,7 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
   );
 
   const renderProgressStepper = () => (
-    <div className="flex items-center justify-center mb-6">
+    <div className="flex items-center justify-center mb-4">
       {steps.map((step, index) => (
         <div key={step.id} className="flex items-center">
           <div className="flex items-center">
@@ -416,7 +428,7 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             {getInterviewTypeIcon()}
@@ -426,10 +438,10 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
 
         {renderProgressStepper()}
 
-        <div className="mt-4">
+        <div className="mt-2">
           {currentStep === 'setup' && renderSetupStep()}
           {currentStep === 'review' && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <h3 className="text-lg font-medium">Review Details</h3>
               <div className="space-y-2 text-sm">
                 <p><strong>Candidate:</strong> {candidateData.name}</p>
@@ -442,7 +454,7 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
           )}
         </div>
 
-        <div className="flex justify-between mt-6">
+        <div className="flex justify-between mt-4">
           <Button
             variant="outline"
             onClick={() => {
