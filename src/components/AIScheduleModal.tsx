@@ -8,8 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { Switch } from '@/components/ui/switch';
-import { User, Group, Binoculars, Plus } from 'lucide-react';
+import { User, Group, Binoculars, Plus, Pencil, MessageCircle, Calendar as CalendarIcon, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,35 +24,46 @@ interface AIScheduleModalProps {
 }
 
 type InterviewType = '1:1' | 'panel' | 'interviewer-observers';
-type Step = 'setup' | 'review' | 'confirm';
+type Step = 'setup' | 'review';
 
 interface TeamMember {
   id: number;
   name: string;
   designation: string;
   role?: 'interviewer' | 'observer';
+  hasCalendarAccess: boolean;
+  hasAvailability: boolean;
 }
 
 const teamMembers: TeamMember[] = [
-  { id: 1, name: 'Rajesh Kumar', designation: 'Senior Engineering Manager' },
-  { id: 2, name: 'Meera Gupta', designation: 'Tech Lead' },
-  { id: 3, name: 'Sanjay Verma', designation: 'Principal Engineer' },
-  { id: 4, name: 'Deepika Rao', designation: 'HR Business Partner' },
-  { id: 5, name: 'Arun Nair', designation: 'Product Manager' },
-  { id: 6, name: 'Shreya Jain', designation: 'Senior Developer' },
+  { id: 1, name: 'Rajesh Kumar', designation: 'Senior Engineering Manager', hasCalendarAccess: true, hasAvailability: true },
+  { id: 2, name: 'Meera Gupta', designation: 'Tech Lead', hasCalendarAccess: true, hasAvailability: true },
+  { id: 3, name: 'Sanjay Verma', designation: 'Principal Engineer', hasCalendarAccess: false, hasAvailability: true },
+  { id: 4, name: 'Deepika Rao', designation: 'HR Business Partner', hasCalendarAccess: true, hasAvailability: false },
+  { id: 5, name: 'Arun Nair', designation: 'Product Manager', hasCalendarAccess: true, hasAvailability: true },
+  { id: 6, name: 'Shreya Jain', designation: 'Senior Developer', hasCalendarAccess: true, hasAvailability: true },
 ];
+
+// Mock candidate data
+const candidateData = {
+  name: 'Priya Sharma',
+  jobTitle: 'Senior Frontend Developer',
+  consentStatus: 'available',
+  interviewStatus: 'to-be-scheduled', // or 'reschedule-request'
+  rescheduleReason: 'Previous interviewer unavailable due to emergency',
+  suggestedTime: 'Tomorrow 2:00 PM - 3:00 PM'
+};
 
 const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, candidateId }) => {
   const [currentStep, setCurrentStep] = useState<Step>('setup');
   const [interviewType, setInterviewType] = useState<InterviewType>('1:1');
-  const [selectedDate, setSelectedDate] = useState<Date>();
-  const [recurringSlots, setRecurringSlots] = useState(false);
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
+  const [showCalendar, setShowCalendar] = useState(true);
   const [selectedParticipants, setSelectedParticipants] = useState<TeamMember[]>([]);
 
   const steps = [
     { id: 'setup', label: 'Setup' },
-    { id: 'review', label: 'Review' },
-    { id: 'confirm', label: 'Confirm' }
+    { id: 'review', label: 'Review' }
   ];
 
   const getStepIndex = (step: Step) => steps.findIndex(s => s.id === step);
@@ -93,12 +103,57 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
     }
   };
 
+  const getAvailabilityStatus = () => {
+    const interviewers = selectedParticipants.filter(p => p.role === 'interviewer');
+    const observers = selectedParticipants.filter(p => p.role === 'observer');
+    
+    const interviewersAvailable = interviewers.every(p => p.hasCalendarAccess && p.hasAvailability);
+    const observersAvailable = observers.every(p => p.hasCalendarAccess && p.hasAvailability);
+    
+    if (interviewersAvailable && observersAvailable) {
+      return { status: 'green', message: 'All participants available' };
+    } else if (interviewersAvailable && !observersAvailable) {
+      return { status: 'orange', message: 'Interviewers available, observers may have conflicts' };
+    } else {
+      return { status: 'red', message: 'Some interviewers unavailable' };
+    }
+  };
+
+  const formatDateRange = () => {
+    if (!dateRange.from || !dateRange.to) return 'Select date range';
+    return `${dateRange.from.toLocaleDateString()} - ${dateRange.to.toLocaleDateString()}`;
+  };
+
   const renderSetupStep = () => (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Candidate Context */}
+      <div className="bg-gray-50 rounded-lg p-4">
+        <h3 className="text-lg font-medium mb-3">Interview Details</h3>
+        <div className="space-y-2 text-sm">
+          <div><span className="font-medium">Candidate:</span> {candidateData.name}</div>
+          <div><span className="font-medium">Position:</span> {candidateData.jobTitle}</div>
+          <div><span className="font-medium">Consent Status:</span> 
+            <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
+              candidateData.consentStatus === 'available' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'
+            }`}>
+              {candidateData.consentStatus === 'available' ? 'Available' : 'Consent Expiring'}
+            </span>
+          </div>
+          <div className="flex items-center">
+            <span className="font-medium">Current Status:</span> 
+            <span className="ml-2">{candidateData.interviewStatus === 'to-be-scheduled' ? 'To be scheduled' : 'Reschedule request'}</span>
+            {candidateData.interviewStatus === 'reschedule-request' && (
+              <MessageCircle size={16} className="ml-2 text-blue-600 cursor-pointer" 
+                title={`Reason: ${candidateData.rescheduleReason}\nSuggested: ${candidateData.suggestedTime}`} />
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Interview Type Selection */}
       <div>
-        <h3 className="text-lg font-medium mb-4">Interview Type</h3>
-        <div className="grid grid-cols-3 gap-4">
+        <h3 className="text-lg font-medium mb-3">Interview Type</h3>
+        <div className="grid grid-cols-3 gap-3">
           {[
             { type: '1:1' as InterviewType, label: '1:1 Interview' },
             { type: 'panel' as InterviewType, label: 'Panel Interview' },
@@ -107,30 +162,30 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
             <button
               key={type}
               onClick={() => setInterviewType(type)}
-              className={`p-4 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
+              className={`p-3 border-2 rounded-lg flex flex-col items-center space-y-2 transition-colors ${
                 interviewType === type 
                   ? 'border-blue-600 bg-blue-50' 
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
-              {type === '1:1' && <User size={24} className="text-blue-600" />}
+              {type === '1:1' && <User size={20} className="text-blue-600" />}
               {type === 'panel' && (
                 <div className="flex items-center">
-                  <Group size={24} className="text-blue-600" />
-                  <span className="ml-1 text-sm font-medium">3+</span>
+                  <Group size={20} className="text-blue-600" />
+                  <span className="ml-1 text-xs font-medium">3+</span>
                 </div>
               )}
               {type === 'interviewer-observers' && (
                 <div className="flex items-center space-x-1">
-                  <User size={24} className="text-blue-600" />
-                  <span className="text-gray-400">+</span>
+                  <User size={20} className="text-blue-600" />
+                  <span className="text-gray-400 text-xs">+</span>
                   <div className="flex items-center">
-                    <User size={20} className="text-gray-600" />
-                    <Binoculars size={18} className="text-gray-600 -ml-1" />
+                    <User size={16} className="text-gray-600" />
+                    <Binoculars size={14} className="text-gray-600 -ml-1" />
                   </div>
                 </div>
               )}
-              <span className="text-sm font-medium">{label}</span>
+              <span className="text-xs font-medium text-center">{label}</span>
             </button>
           ))}
         </div>
@@ -138,57 +193,58 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
 
       {/* Date Selection */}
       <div>
-        <h3 className="text-lg font-medium mb-4">Select Date</h3>
-        <div className="flex flex-col space-y-4">
+        <h3 className="text-lg font-medium mb-3">Select Interview Date Range</h3>
+        {showCalendar ? (
           <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            className="rounded-md border pointer-events-auto"
-            style={{
-              '--rdp-cell-size': '40px',
-              '--rdp-accent-color': '#2563EB',
-              '--rdp-background-color': '#2563EB',
-            } as React.CSSProperties}
+            mode="range"
+            selected={dateRange}
+            onSelect={(range) => {
+              setDateRange(range || { from: undefined, to: undefined });
+              if (range?.from && range?.to) {
+                setShowCalendar(false);
+              }
+            }}
+            className="rounded-md border"
           />
-          <div className="flex items-center space-x-2">
-            <Switch
-              checked={recurringSlots}
-              onCheckedChange={setRecurringSlots}
-              style={{ backgroundColor: recurringSlots ? '#10B981' : '#6B7280' }}
-            />
-            <label className="text-sm font-medium">Recurring slots</label>
+        ) : (
+          <div className="flex items-center justify-between p-3 border rounded-lg bg-gray-50">
+            <span className="text-sm">{formatDateRange()}</span>
+            <button onClick={() => setShowCalendar(true)}>
+              <Pencil size={16} className="text-blue-600" />
+            </button>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Participant Selection */}
       <div>
-        <h3 className="text-lg font-medium mb-4">Select Participants</h3>
+        <h3 className="text-lg font-medium mb-3">
+          {interviewType === '1:1' ? 'Select Interviewer' : 'Select Participants'}
+        </h3>
         
         {/* Selected Participants */}
         {selectedParticipants.length > 0 && (
           <div className="mb-4">
-            {interviewType === 'interviewer-observers' && (
+            {(interviewType === 'panel' || interviewType === 'interviewer-observers') && (
               <>
-                <h4 className="text-sm font-medium mb-2">Interviewer</h4>
-                <div className="flex flex-wrap gap-2 mb-4">
+                <h4 className="text-sm font-medium mb-2">Interviewers</h4>
+                <div className="flex flex-wrap gap-2 mb-3">
                   {selectedParticipants
                     .filter(p => p.role === 'interviewer')
                     .map(participant => (
                       <div key={participant.id} className="flex items-center space-x-2 bg-gray-100 rounded-full px-3 py-1">
-                        <Avatar className="w-6 h-6">
+                        <Avatar className="w-5 h-5">
                           <AvatarFallback className="text-xs">
                             {participant.name.split(' ').map(n => n[0]).join('')}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-sm">{participant.name}</span>
-                        <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#F3F4F6' }}>
-                          Interviewer
-                        </span>
+                        <span className="text-xs">{participant.name}</span>
+                        {!participant.hasCalendarAccess && (
+                          <CalendarIcon size={12} className="text-orange-500" title="Request calendar access" />
+                        )}
                         <button
                           onClick={() => removeParticipant(participant.id)}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-red-500 hover:text-red-700 text-sm"
                         >
                           ×
                         </button>
@@ -196,49 +252,53 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
                     ))}
                 </div>
                 
-                <h4 className="text-sm font-medium mb-2">Observers</h4>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {selectedParticipants
-                    .filter(p => p.role === 'observer')
-                    .map(participant => (
-                      <div key={participant.id} className="flex items-center space-x-2 bg-gray-100 rounded-full px-3 py-1">
-                        <Avatar className="w-6 h-6">
-                          <AvatarFallback className="text-xs">
-                            {participant.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm">{participant.name}</span>
-                        <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#F3F4F6' }}>
-                          Observer
-                        </span>
-                        <button
-                          onClick={() => removeParticipant(participant.id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                </div>
+                {interviewType === 'interviewer-observers' && (
+                  <>
+                    <h4 className="text-sm font-medium mb-2">Observers</h4>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {selectedParticipants
+                        .filter(p => p.role === 'observer')
+                        .map(participant => (
+                          <div key={participant.id} className="flex items-center space-x-2 bg-gray-100 rounded-full px-3 py-1">
+                            <Avatar className="w-5 h-5">
+                              <AvatarFallback className="text-xs">
+                                {participant.name.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs">{participant.name}</span>
+                            {!participant.hasCalendarAccess && (
+                              <CalendarIcon size={12} className="text-orange-500" title="Request calendar access" />
+                            )}
+                            <button
+                              onClick={() => removeParticipant(participant.id)}
+                              className="text-red-500 hover:text-red-700 text-sm"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                    </div>
+                  </>
+                )}
               </>
             )}
             
-            {interviewType !== 'interviewer-observers' && (
-              <div className="flex flex-wrap gap-2 mb-4">
+            {interviewType === '1:1' && (
+              <div className="flex flex-wrap gap-2 mb-3">
                 {selectedParticipants.map(participant => (
                   <div key={participant.id} className="flex items-center space-x-2 bg-gray-100 rounded-full px-3 py-1">
-                    <Avatar className="w-6 h-6">
+                    <Avatar className="w-5 h-5">
                       <AvatarFallback className="text-xs">
                         {participant.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">{participant.name}</span>
-                    <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#F3F4F6' }}>
-                      {participant.role || 'Interviewer'}
-                    </span>
+                    <span className="text-xs">{participant.name}</span>
+                    {!participant.hasCalendarAccess && (
+                      <CalendarIcon size={12} className="text-orange-500" title="Request calendar access" />
+                    )}
                     <button
                       onClick={() => removeParticipant(participant.id)}
-                      className="text-red-500 hover:text-red-700"
+                      className="text-red-500 hover:text-red-700 text-sm"
                     >
                       ×
                     </button>
@@ -252,18 +312,19 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
         {/* Add Participant Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="flex items-center space-x-2">
-              <Plus size={16} />
-              <span>Add Participant</span>
+            <Button variant="outline" className="flex items-center space-x-2" size="sm">
+              <Plus size={14} />
+              <span>{interviewType === '1:1' ? 'Add Interviewer' : 'Add Participant'}</span>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-80">
+          <DropdownMenuContent className="w-72">
             {teamMembers
               .filter(member => !selectedParticipants.find(p => p.id === member.id))
+              .filter(member => interviewType !== '1:1' || selectedParticipants.length === 0)
               .map(member => (
                 <DropdownMenuItem 
                   key={member.id} 
-                  className="cursor-pointer"
+                  className="cursor-pointer p-3"
                   onClick={() => {
                     if (interviewType === 'interviewer-observers') {
                       const interviewerCount = selectedParticipants.filter(p => p.role === 'interviewer').length;
@@ -275,31 +336,61 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
                   }}
                 >
                   <div className="flex items-center space-x-3 w-full">
-                    <Avatar className="w-8 h-8">
-                      <AvatarFallback>
+                    <Avatar className="w-6 h-6">
+                      <AvatarFallback className="text-xs">
                         {member.name.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <div className="font-medium">{member.name}</div>
-                      <div className="text-sm text-gray-500">{member.designation}</div>
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{member.name}</div>
+                      <div className="text-xs text-gray-500">{member.designation}</div>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      {!member.hasCalendarAccess && (
+                        <CalendarIcon size={12} className="text-orange-500" />
+                      )}
+                      {member.hasAvailability ? (
+                        <CheckCircle size={12} className="text-green-500" />
+                      ) : (
+                        <XCircle size={12} className="text-red-500" />
+                      )}
                     </div>
                   </div>
                 </DropdownMenuItem>
               ))}
           </DropdownMenuContent>
         </DropdownMenu>
+
+        {/* Availability Status */}
+        {selectedParticipants.length > 0 && (
+          <div className="mt-3 flex items-center space-x-2">
+            {(() => {
+              const status = getAvailabilityStatus();
+              const IconComponent = status.status === 'green' ? CheckCircle : 
+                                  status.status === 'orange' ? AlertCircle : XCircle;
+              const colorClass = status.status === 'green' ? 'text-green-500' : 
+                               status.status === 'orange' ? 'text-orange-500' : 'text-red-500';
+              
+              return (
+                <>
+                  <IconComponent size={16} className={colorClass} />
+                  <span className="text-sm">{status.message}</span>
+                </>
+              );
+            })()}
+          </div>
+        )}
       </div>
     </div>
   );
 
   const renderProgressStepper = () => (
-    <div className="flex items-center justify-center mb-8">
+    <div className="flex items-center justify-center mb-6">
       {steps.map((step, index) => (
         <div key={step.id} className="flex items-center">
           <div className="flex items-center">
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
                 getStepIndex(currentStep) >= index
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 text-gray-500'
@@ -314,7 +405,7 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
             </span>
           </div>
           {index < steps.length - 1 && (
-            <div className={`w-16 h-0.5 mx-4 ${
+            <div className={`w-12 h-0.5 mx-3 ${
               getStepIndex(currentStep) > index ? 'bg-blue-600' : 'bg-gray-200'
             }`} />
           )}
@@ -325,7 +416,7 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             {getInterviewTypeIcon()}
@@ -335,28 +426,23 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
 
         {renderProgressStepper()}
 
-        <div className="mt-6">
+        <div className="mt-4">
           {currentStep === 'setup' && renderSetupStep()}
           {currentStep === 'review' && (
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Review Details</h3>
-              <div className="space-y-2">
+              <div className="space-y-2 text-sm">
+                <p><strong>Candidate:</strong> {candidateData.name}</p>
+                <p><strong>Position:</strong> {candidateData.jobTitle}</p>
                 <p><strong>Interview Type:</strong> {interviewType.replace('-', ' + ')}</p>
-                <p><strong>Date:</strong> {selectedDate?.toDateString()}</p>
-                <p><strong>Recurring:</strong> {recurringSlots ? 'Yes' : 'No'}</p>
+                <p><strong>Date Range:</strong> {formatDateRange()}</p>
                 <p><strong>Participants:</strong> {selectedParticipants.length}</p>
               </div>
             </div>
           )}
-          {currentStep === 'confirm' && (
-            <div className="text-center space-y-4">
-              <h3 className="text-lg font-medium">Interview Scheduled!</h3>
-              <p className="text-gray-600">The AI has successfully scheduled the interview.</p>
-            </div>
-          )}
         </div>
 
-        <div className="flex justify-between mt-8">
+        <div className="flex justify-between mt-6">
           <Button
             variant="outline"
             onClick={() => {
@@ -383,7 +469,7 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
             style={{ backgroundColor: '#2563EB' }}
             className="text-white"
           >
-            {getStepIndex(currentStep) === steps.length - 1 ? 'Close' : 'Next'}
+            {getStepIndex(currentStep) === steps.length - 1 ? 'Schedule' : 'Next'}
           </Button>
         </div>
       </DialogContent>

@@ -7,29 +7,30 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Calendar, Bot } from 'lucide-react';
+import { Calendar, Bot, RotateCcw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AIScheduleModal from './AIScheduleModal';
 
 interface ActionButtonProps {
   candidateId: number;
+  isReschedule?: boolean;
 }
 
-const ActionButton: React.FC<ActionButtonProps> = ({ candidateId }) => {
+const ActionButton: React.FC<ActionButtonProps> = ({ candidateId, isReschedule = false }) => {
   const { toast } = useToast();
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
   const handleManualSchedule = () => {
     toast({
-      title: "Manual Schedule",
-      description: `Opening manual scheduling for candidate ${candidateId}`,
+      title: isReschedule ? "Manual Reschedule" : "Manual Schedule",
+      description: `Opening manual ${isReschedule ? 'rescheduling' : 'scheduling'} for candidate ${candidateId}`,
     });
-    console.log(`Manual schedule clicked for candidate ${candidateId}`);
+    console.log(`Manual ${isReschedule ? 'reschedule' : 'schedule'} clicked for candidate ${candidateId}`);
   };
 
   const handleAISchedule = () => {
     setIsAIModalOpen(true);
-    console.log(`AI schedule clicked for candidate ${candidateId}`);
+    console.log(`AI ${isReschedule ? 'reschedule' : 'schedule'} clicked for candidate ${candidateId}`);
   };
 
   return (
@@ -37,21 +38,35 @@ const ActionButton: React.FC<ActionButtonProps> = ({ candidateId }) => {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="hover:bg-gray-50">
-            Schedule
+            {isReschedule ? (
+              <>
+                <RotateCcw size={14} className="mr-1" />
+                Reschedule
+              </>
+            ) : (
+              <>
+                <Calendar size={14} className="mr-1" />
+                Schedule
+              </>
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem onClick={handleManualSchedule} className="cursor-pointer">
-            <div className="flex items-center justify-center w-8 h-8 rounded-md mr-3" style={{ backgroundColor: '#F3F4F6' }}>
-              <Calendar size={16} className="text-gray-600" />
+            <div className="flex items-center justify-center w-6 h-6 rounded-md mr-3" style={{ backgroundColor: '#F3F4F6' }}>
+              {isReschedule ? (
+                <RotateCcw size={14} className="text-gray-600" />
+              ) : (
+                <Calendar size={14} className="text-gray-600" />
+              )}
             </div>
-            <span>Manual Schedule</span>
+            <span>Manual {isReschedule ? 'Reschedule' : 'Schedule'}</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleAISchedule} className="cursor-pointer">
-            <div className="flex items-center justify-center w-8 h-8 rounded-md mr-3" style={{ backgroundColor: '#2563EB' }}>
-              <Bot size={16} className="text-white" />
+            <div className="flex items-center justify-center w-6 h-6 rounded-md mr-3" style={{ backgroundColor: '#2563EB' }}>
+              <Bot size={14} className="text-white" />
             </div>
-            <span>AI Schedule</span>
+            <span>AI {isReschedule ? 'Reschedule' : 'Schedule'}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
