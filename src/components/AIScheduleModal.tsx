@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -58,7 +57,7 @@ const candidateData = {
 const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, candidateId }) => {
   const [currentStep, setCurrentStep] = useState<Step>('setup');
   const [interviewType, setInterviewType] = useState<InterviewType>('1:1');
-  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({ from: undefined, to: undefined });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [showCalendar, setShowCalendar] = useState(true);
   const [selectedParticipants, setSelectedParticipants] = useState<TeamMember[]>([]);
 
@@ -121,12 +120,12 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
   };
 
   const formatDateRange = () => {
-    if (!dateRange.from || !dateRange.to) return 'Select date range';
+    if (!dateRange?.from || !dateRange?.to) return 'Select date range';
     return `${dateRange.from.toLocaleDateString()} - ${dateRange.to.toLocaleDateString()}`;
   };
 
   const renderSetupStep = () => (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Candidate Context */}
       <div className="bg-gray-50 rounded-lg p-3">
         <h3 className="text-lg font-medium mb-2">Interview Details</h3>
@@ -144,7 +143,7 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
             <span className="font-medium">Current Status:</span> 
             <span className="ml-2">{candidateData.interviewStatus === 'to-be-scheduled' ? 'To be scheduled' : 'Reschedule request'}</span>
             {candidateData.interviewStatus === 'reschedule-request' && (
-              <div className="ml-2 cursor-pointer" title={`Reason: ${candidateData.rescheduleReason}\nSuggested: ${candidateData.suggestedTime}`}>
+              <div className="ml-2 cursor-pointer">
                 <MessageCircle size={16} className="text-blue-600" />
               </div>
             )}
@@ -201,13 +200,9 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
             mode="range"
             selected={dateRange}
             onSelect={(range: DateRange | undefined) => {
-              if (range) {
-                setDateRange(range);
-                if (range.from && range.to) {
-                  setShowCalendar(false);
-                }
-              } else {
-                setDateRange({ from: undefined, to: undefined });
+              setDateRange(range);
+              if (range?.from && range?.to) {
+                setShowCalendar(false);
               }
             }}
             className="rounded-md border"
@@ -230,7 +225,7 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
         
         {/* Selected Participants */}
         {selectedParticipants.length > 0 && (
-          <div className="mb-3">
+          <div className="mb-2">
             {(interviewType === 'panel' || interviewType === 'interviewer-observers') && (
               <>
                 <h4 className="text-sm font-medium mb-1">Interviewers</h4>
@@ -246,7 +241,7 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
                         </Avatar>
                         <span className="text-xs">{participant.name}</span>
                         {!participant.hasCalendarAccess && (
-                          <div className="cursor-pointer" title="Request calendar access">
+                          <div className="cursor-pointer">
                             <CalendarIcon size={12} className="text-orange-500" />
                           </div>
                         )}
@@ -275,7 +270,7 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
                             </Avatar>
                             <span className="text-xs">{participant.name}</span>
                             {!participant.hasCalendarAccess && (
-                              <div className="cursor-pointer" title="Request calendar access">
+                              <div className="cursor-pointer">
                                 <CalendarIcon size={12} className="text-orange-500" />
                               </div>
                             )}
@@ -304,7 +299,7 @@ const AIScheduleModal: React.FC<AIScheduleModalProps> = ({ isOpen, onClose, cand
                     </Avatar>
                     <span className="text-xs">{participant.name}</span>
                     {!participant.hasCalendarAccess && (
-                      <div className="cursor-pointer" title="Request calendar access">
+                      <div className="cursor-pointer">
                         <CalendarIcon size={12} className="text-orange-500" />
                       </div>
                     )}
