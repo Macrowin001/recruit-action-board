@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Calendar, Robot } from 'lucide-react';
+import { Calendar, Bot } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ActionButtonProps {
@@ -49,7 +49,7 @@ const ActionButton: React.FC<ActionButtonProps> = ({ candidateId }) => {
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleAISchedule} className="cursor-pointer">
           <div className="flex items-center justify-center w-8 h-8 rounded-md mr-3" style={{ backgroundColor: '#2563EB' }}>
-            <Robot size={16} className="text-white" />
+            <Bot size={16} className="text-white" />
           </div>
           <span>AI Schedule</span>
         </DropdownMenuItem>
