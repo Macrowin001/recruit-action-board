@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -18,6 +19,24 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: ['Inter', 'sans-serif'],
+			},
+			spacing: {
+				'1': '8px',
+				'2': '16px',
+				'3': '24px',
+				'4': '32px',
+				'5': '40px',
+				'6': '48px',
+				'8': '64px',
+				'10': '80px',
+				'12': '96px',
+				'16': '128px',
+				'20': '160px',
+				'24': '192px',
+				'32': '256px',
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -25,15 +44,15 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
+					DEFAULT: '#2563EB',
 					foreground: 'hsl(var(--primary-foreground))'
 				},
 				secondary: {
-					DEFAULT: 'hsl(var(--secondary))',
+					DEFAULT: '#10B981',
 					foreground: 'hsl(var(--secondary-foreground))'
 				},
 				destructive: {
-					DEFAULT: 'hsl(var(--destructive))',
+					DEFAULT: '#EF4444',
 					foreground: 'hsl(var(--destructive-foreground))'
 				},
 				muted: {

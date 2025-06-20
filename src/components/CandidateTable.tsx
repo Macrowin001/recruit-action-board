@@ -10,7 +10,8 @@ interface Candidate {
   name: string;
   email: string;
   position: string;
-  status: 'available' | 'consent-expiring';
+  status: 'shortlisted' | 'screened' | 'interview-scheduled';
+  consentStatus: 'available' | 'consent-expiring';
   stage: 'Schedule interview' | 'Short list' | 'Screen';
   location: string;
   experience: string;
@@ -19,62 +20,68 @@ interface Candidate {
 const mockCandidates: Candidate[] = [
   {
     id: 1,
-    name: 'Sarah Johnson',
-    email: 'sarah.johnson@email.com',
+    name: 'Priya Sharma',
+    email: 'priya.sharma@email.com',
     position: 'Senior Frontend Developer',
-    status: 'available',
+    status: 'interview-scheduled',
+    consentStatus: 'available',
     stage: 'Schedule interview',
-    location: 'San Francisco, CA',
+    location: 'Bangalore, Karnataka',
     experience: '5+ years'
   },
   {
     id: 2,
-    name: 'Michael Chen',
-    email: 'michael.chen@email.com',
+    name: 'Arjun Patel',
+    email: 'arjun.patel@email.com',
     position: 'Full Stack Engineer',
-    status: 'consent-expiring',
+    status: 'interview-scheduled',
+    consentStatus: 'consent-expiring',
     stage: 'Schedule interview',
-    location: 'New York, NY',
+    location: 'Mumbai, Maharashtra',
     experience: '3+ years'
   },
   {
     id: 3,
-    name: 'Emily Rodriguez',
-    email: 'emily.rodriguez@email.com',
+    name: 'Kavya Reddy',
+    email: 'kavya.reddy@email.com',
     position: 'UX Designer',
-    status: 'available',
+    status: 'interview-scheduled',
+    consentStatus: 'available',
     stage: 'Schedule interview',
-    location: 'Austin, TX',
+    location: 'Hyderabad, Telangana',
     experience: '4+ years'
   },
   {
     id: 4,
-    name: 'David Kim',
-    email: 'david.kim@email.com',
+    name: 'Rohit Kumar',
+    email: 'rohit.kumar@email.com',
     position: 'Backend Developer',
-    status: 'available',
+    status: 'shortlisted',
+    consentStatus: 'available',
     stage: 'Short list',
-    location: 'Seattle, WA',
+    location: 'Delhi, NCR',
     experience: '6+ years'
   },
   {
     id: 5,
-    name: 'Jessica Taylor',
-    email: 'jessica.taylor@email.com',
+    name: 'Ananya Singh',
+    email: 'ananya.singh@email.com',
     position: 'Product Manager',
-    status: 'consent-expiring',
+    status: 'shortlisted',
+    consentStatus: 'consent-expiring',
     stage: 'Short list',
-    location: 'Boston, MA',
+    location: 'Pune, Maharashtra',
     experience: '7+ years'
   },
   {
     id: 6,
-    name: 'Alex Thompson',
-    email: 'alex.thompson@email.com',
+    name: 'Vikram Joshi',
+    email: 'vikram.joshi@email.com',
     position: 'Data Scientist',
-    status: 'available',
+    status: 'screened',
+    consentStatus: 'available',
     stage: 'Screen',
-    location: 'Chicago, IL',
+    location: 'Chennai, Tamil Nadu',
     experience: '2+ years'
   }
 ];
@@ -88,8 +95,33 @@ const CandidateTable = () => {
     candidate.position.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'interview-scheduled':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white" style={{ backgroundColor: '#2563EB' }}>
+            Interview Scheduled
+          </span>
+        );
+      case 'shortlisted':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white" style={{ backgroundColor: '#10B981' }}>
+            Shortlisted
+          </span>
+        );
+      case 'screened':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white" style={{ backgroundColor: '#6B7280' }}>
+            Screened
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <Card className="w-full shadow-lg">
+    <Card className="w-full shadow-lg" style={{ backgroundColor: '#F9FAFB' }}>
       {/* Sticky Header */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 p-6">
         <div className="flex items-center justify-between">
@@ -130,6 +162,9 @@ const CandidateTable = () => {
                 Experience
               </th>
               <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Consent Status
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -151,7 +186,7 @@ const CandidateTable = () => {
                   <div className="text-sm text-gray-900">{candidate.position}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <StatusBadge status={candidate.status} />
+                  {getStatusBadge(candidate.status)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -163,6 +198,9 @@ const CandidateTable = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {candidate.experience}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <StatusBadge status={candidate.consentStatus} />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <ActionButton candidateId={candidate.id} />
